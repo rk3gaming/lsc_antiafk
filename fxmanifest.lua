@@ -1,13 +1,19 @@
-fx_version 'bodacious'
-author 'Rkfrmda3 / LSC Development'
+fx_version 'adamant'
 game 'gta5'
-
 lua54 'yes'
 
-client_script 'source/client.lua'
-server_script 'source/server.lua'
+author 'LSC Development'
+description 'A advanced AFK script'
 
 shared_scripts {
-    '@ox_lib/init.lua',
-    'config.lua'
+	'@ox_lib/init.lua',
+	'config.lua'
+}
+
+client_script {
+	'client/*.lua'
+}
+
+server_scripts {
+	'server/*.lua'
 }
