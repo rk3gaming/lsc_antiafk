@@ -1,6 +1,9 @@
-Config = {}
-Config.EnableAFK = true -- Leave on if you want this script to work.
-
-Config.afkTimeMinutes = 10 -- Amount of minutes players have to be AFK for before receciving the CAPTCHA.
-Config.kickTime = 60 -- Seconds they have to answer the CAPTCHA before being kicked.
-Config.captchaLength = 6 -- Dont touch!
+--- @class Config
+--- @field afkTimeMinutes number Minutes of inactivity before CAPTCHA appears
+--- @field kickTime number Seconds to complete CAPTCHA before kick
+--- @field captchaLength number Length of the CAPTCHA string
+Config = {
+    afkTimeMinutes = 1,
+    kickTime = 60,
+    captchaLength = 6
+}
