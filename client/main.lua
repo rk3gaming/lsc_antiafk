@@ -96,6 +96,7 @@ local function checkAFK()
     else
         TriggerServerEvent('LSC:AntiAFK:kick')
     end
+end
 
 local function onZoneExit(self)
     if AFKSystem.currentTimer and AFKSystem.currentTimer.destroy then
