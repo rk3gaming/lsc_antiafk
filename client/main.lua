@@ -68,12 +68,22 @@ local function checkAFK()
         if input[1] == captcha then
             responded = true
             AFKSystem.captchaActive = false
+    
+            if AFKSystem.currentZone and AFKSystem.currentZone.remove then
+                AFKSystem.currentZone:remove()
+                AFKSystem.currentZone = nil
+            end
+    
             showNotification(
                 'AFK System',
                 'CAPTCHA verified successfully',
                 'success'
             )
-            createNewZone()
+    
+            SetTimeout(1000, function()
+                createNewZone()
+            end)
+    
         else
             showNotification(
                 'AFK System',
@@ -86,7 +96,6 @@ local function checkAFK()
     else
         TriggerServerEvent('LSC:AntiAFK:kick')
     end
-end
 
 local function onZoneExit(self)
     if AFKSystem.currentTimer and AFKSystem.currentTimer.destroy then
@@ -105,6 +114,11 @@ local function onZoneExit(self)
 end
 
 function createNewZone()
+    if AFKSystem.currentZone and AFKSystem.currentZone.remove then
+        AFKSystem.currentZone:remove()
+        AFKSystem.currentZone = nil
+    end
+
     local playerPed = PlayerPedId()
     if not playerPed then return end
 
@@ -112,15 +126,21 @@ function createNewZone()
 
     AFKSystem.currentZone = lib.zones.sphere({
         coords = coords,
-        radius = 2,
+        radius = 0.1,
         debug = false,
         onExit = onZoneExit
     })
+
+    if AFKSystem.currentTimer then
+        ClearTimeout(AFKSystem.currentTimer)
+        AFKSystem.currentTimer = nil
+    end
 
     AFKSystem.currentTimer = SetTimeout(Config.afkTimeMinutes * 60 * 1000, function()
         checkAFK()
     end)
 end
+
 
 CreateThread(function()
     while not DoesEntityExist(cache.ped) do
