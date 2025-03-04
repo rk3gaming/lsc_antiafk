@@ -7,7 +7,9 @@ local AFKSystem = {
     --- @type any Current zone instance
     currentZone = nil,
     --- @type any Current timer instance
-    currentTimer = nil
+    currentTimer = nil,
+    --- @type number Last time CAPTCHA was successfully verified
+    lastVerificationTime = 0
 }
 
 --- @param length number Length of the CAPTCHA
@@ -34,6 +36,13 @@ local function showNotification(title, description, type)
 end
 
 local function checkAFK()
+    local currentTime = GetGameTimer()
+    local cooldownMs = (Config.afkCooldownMinutes or 5) * 60 * 1000
+    if currentTime - AFKSystem.lastVerificationTime < cooldownMs then
+        createNewZone()
+        return
+    end
+
     if AFKSystem.captchaActive then return end
     AFKSystem.captchaActive = true
 
@@ -62,12 +71,12 @@ local function checkAFK()
             max = Config.captchaLength,
         }
     })
-    
 
     if input and input[1] then
         if input[1] == captcha then
             responded = true
             AFKSystem.captchaActive = false
+            AFKSystem.lastVerificationTime = GetGameTimer()
     
             if AFKSystem.currentZone and AFKSystem.currentZone.remove then
                 AFKSystem.currentZone:remove()
@@ -141,7 +150,6 @@ function createNewZone()
         checkAFK()
     end)
 end
-
 
 CreateThread(function()
     while not DoesEntityExist(cache.ped) do
