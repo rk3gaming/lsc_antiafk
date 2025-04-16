@@ -12,6 +12,13 @@ local AFKSystem = {
     lastVerificationTime = 0
 }
 
+--- @param message string The debug message to print
+local function debugPrint(message)
+    if Config.debug then
+        lib.print.debug('[LSC Anti-AFK] ' .. message)
+    end
+end
+
 --- @param length number Length of the CAPTCHA
 --- @return string captcha The generated CAPTCHA string
 local function generateCaptcha(length)
@@ -36,31 +43,46 @@ local function showNotification(title, description, type)
 end
 
 local function checkAFK()
+    debugPrint('checkAFK function started')
     local currentTime = GetGameTimer()
-    local cooldownMs = (Config.afkCooldownMinutes or 5) * 60 * 1000
-    if currentTime - AFKSystem.lastVerificationTime < cooldownMs then
+    local cooldownMs = (Config.afkTimeMinutes or 1) * 60 * 1000
+    debugPrint(string.format('Current time: %d, Last verification: %d, Cooldown: %d', currentTime, AFKSystem.lastVerificationTime, cooldownMs))
+    
+    if AFKSystem.lastVerificationTime > 0 and currentTime - AFKSystem.lastVerificationTime < cooldownMs then
+        debugPrint('Still in cooldown period')
         createNewZone()
         return
     end
 
-    if AFKSystem.captchaActive then return end
+    if AFKSystem.captchaActive then 
+        debugPrint('CAPTCHA already active')
+        return 
+    end
+    
+    debugPrint('Starting CAPTCHA verification')
     AFKSystem.captchaActive = true
 
     local captcha = generateCaptcha(Config.captchaLength)
     local kickTimer = Config.kickTime
     local responded = false
 
+    debugPrint('Created CAPTCHA: ' .. captcha)
+    debugPrint('Starting kick timer: ' .. kickTimer .. ' seconds')
+
     Citizen.CreateThread(function()
         while kickTimer > 0 and not responded do
             Wait(1000)
             kickTimer = kickTimer - 1
+            debugPrint('Kick timer: ' .. kickTimer .. ' seconds remaining')
         end
 
         if not responded then
+            debugPrint('No response received, triggering kick')
             TriggerServerEvent('LSC:AntiAFK:kick')
         end
     end)
 
+    debugPrint('Opening CAPTCHA dialog')
     local input = lib.inputDialog('Anti-AFK Verification', {
         {
             type = 'input',
@@ -72,8 +94,11 @@ local function checkAFK()
         }
     })
 
+    debugPrint('Dialog result: ' .. (input and 'received' or 'none'))
     if input and input[1] then
+        debugPrint('User input: ' .. input[1])
         if input[1] == captcha then
+            debugPrint('CAPTCHA verification successful')
             responded = true
             AFKSystem.captchaActive = false
             AFKSystem.lastVerificationTime = GetGameTimer()
@@ -94,6 +119,7 @@ local function checkAFK()
             end)
     
         else
+            debugPrint('Incorrect CAPTCHA entered')
             showNotification(
                 'AFK System',
                 'Incorrect CAPTCHA. Please try again',
@@ -103,13 +129,14 @@ local function checkAFK()
             checkAFK()
         end
     else
+        debugPrint('No input received or dialog cancelled')
         TriggerServerEvent('LSC:AntiAFK:kick')
     end
 end
 
 local function onZoneExit(self)
-    if AFKSystem.currentTimer and AFKSystem.currentTimer.destroy then
-        AFKSystem.currentTimer:destroy()
+    if AFKSystem.currentTimer then
+        ClearTimeout(AFKSystem.currentTimer)
         AFKSystem.currentTimer = nil
     end
 
@@ -160,5 +187,8 @@ CreateThread(function()
 end)
 
 RegisterCommand('testafk', function()
+    debugPrint('/testafk command triggered')
     checkAFK()
 end, false)
+
+debugPrint('Anti-AFK Started')
