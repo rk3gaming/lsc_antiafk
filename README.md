@@ -8,7 +8,9 @@ PREVIEW: https://imgur.com/a/85BKM3y
 
 [🔗 Discord](https://discord.gg/2DK7WaxKHU)
 
-Legal
+
+
+## Legal
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
